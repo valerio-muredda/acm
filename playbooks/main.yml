@@ -1,0 +1,133 @@
+---
+- name: Multi-Cluster Operations with RHACM Authentication
+  hosts: localhost
+  vars_files:
+    - ../vault/vault.yaml  # Contains hub_url and token_acm
+  vars:
+    target_clusters: ["cluster1", "cluster2", "cluster3"] # Name of ManagedCluster
+  tasks:
+    - block:
+        - name: Create ManagedClusterAddOn
+          kubernetes.core.k8s:
+            definition: |
+              apiVersion: addon.open-cluster-management.io/v1alpha1
+              kind: ManagedClusterAddOn
+              metadata:
+                name: managed-serviceaccount
+                namespace: "{{ item }}"
+              spec:
+                installNamespace: open-cluster-management-agent-addon
+            host: "{{ hub_url }}/local-cluster"
+            api_key: "{{ token_acm }}"
+            validate_certs: false
+          with_items: "{{ target_clusters }}"
+        - name: Create ManagedServiceAccount
+          kubernetes.core.k8s:
+            definition: |
+              apiVersion: authentication.open-cluster-management.io/v1beta1
+              kind: ManagedServiceAccount
+              metadata:
+                name: aap-integration-serviceaccount
+                namespace: "{{ item }}"
+              spec:
+                rotation:
+                  enabled: true
+                  validity: 8640h0m0s
+            host: "{{ hub_url }}/local-cluster"
+            api_key: "{{ token_acm }}"
+            validate_certs: false      
+          with_items: "{{ target_clusters }}"
+        - name: Get UID of ManagedServiceAccount
+          kubernetes.core.k8s_info:
+            api_version: authentication.open-cluster-management.io/v1beta1
+            kind: ManagedServiceAccount
+            namespace: "{{ item }}"
+            name: aap-integration-serviceaccount
+            host: "{{ hub_url }}/local-cluster"
+            api_key: "{{ token_acm }}"
+            validate_certs: false
+          with_items: "{{ target_clusters }}"            
+          register: msa_info
+        - name: Create ManifestWork
+          kubernetes.core.k8s:
+            definition: |
+              apiVersion: work.open-cluster-management.io/v1
+              kind: ManifestWork
+              metadata:
+                name: aap-integration-serviceaccount
+                namespace: "{{ item }}"
+              spec:
+                workload:
+                  manifests: 
+                    - apiVersion: rbac.authorization.k8s.io/v1
+                      kind: ClusterRoleBinding
+                      metadata:
+                        name: cluster-admin-app
+                      roleRef:
+                        apiGroup: rbac.authorization.k8s.io
+                        kind: ClusterRole
+                        name: cluster-admin
+                      subjects:
+                        - kind: ServiceAccount
+                          name: aap-integration-serviceaccount
+                          namespace: open-cluster-management-agent-addon
+            host: "{{ hub_url }}/local-cluster"
+            api_key: "{{ token_acm }}"
+            validate_certs: false
+          with_items: "{{ target_clusters }}"
+        - name: Check if token is created
+          kubernetes.core.k8s_info:
+            kind: Secret
+            name: aap-integration-serviceaccount
+            namespace: "{{ item }}"
+            host: "{{ hub_url }}/local-cluster"
+            api_key: "{{ token_acm }}"
+            validate_certs: false
+          with_items: "{{ target_clusters }}"
+          register: secret_info
+          until: secret_info is not failed
+          retries: 10
+          delay: 15
+        - name: Create empty array
+          set_fact:
+            clusters_tokens: []
+        - name: Fetch secret aap-integration-serviceaccount
+          kubernetes.core.k8s_info:
+            api_version: v1
+            kind: Secret
+            namespace: "{{ item }}"
+            name: "aap-integration-serviceaccount"
+            api_key: "{{ token_acm }}"
+            host: "{{ hub_url }}/local-cluster"
+            validate_certs: false
+          register: secret_result
+          with_items: "{{ target_clusters }}"
+        - name: Extract and decode token
+          set_fact:
+            clusters_tokens: "{{ clusters_tokens + [clusters] }}"
+          vars:
+            clusters:
+              cluster_name: "{{ item }}"
+              token: "{{ secret_result.results[0].resources[0].data.token | b64decode }}"
+          with_items: "{{ target_clusters }}"
+        # Include your specific tasks here
+        - name: Your custom operations
+          include_tasks: "tasks/job-handler.yml"
+          vars:
+            cluster_name: "{{ item }}"
+          loop: "{{ target_clusters }}"
+      always:
+        - name: Delete ManagedServiceAccount
+          kubernetes.core.k8s:
+            state: absent
+            definition: |
+              apiVersion: authentication.open-cluster-management.io/v1beta1
+              kind: ManagedServiceAccount
+              metadata:
+                name: aap-integration-serviceaccount
+                namespace: "{{ item }}"
+            host: "{{ hub_url }}/local-cluster"
+            api_key: "{{ token_acm }}"
+            validate_certs: false      
+          with_items: "{{ target_clusters }}"
+
