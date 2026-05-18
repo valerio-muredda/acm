@@ -4,7 +4,7 @@
   vars_files:
     - ../vault/vault.yaml  # Contains hub_url and token_acm
   vars:
-    target_clusters: local-cluster # Name of ManagedCluster
+    target_clusters: "local-cluster" # Name of ManagedCluster
   tasks:
     - block:
         - name: Create ManagedClusterAddOn
