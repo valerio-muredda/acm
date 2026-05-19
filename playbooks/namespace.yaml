@@ -5,27 +5,26 @@
   vars_files:
     - ../vault/vault.yaml  # Contains hub_url and token_acm
   vars:
-    # These would typically be passed as Extra Vars from an AAP Job Template
     target_cluster: "local-cluster"
     namespace_name: "prod-apps"
-    app_label: "billing-service"
 
   tasks:
-    - name: Ensure namespace exists on the managed cluster
+    - name: Create ManifestWork on Hub to deploy Namespace to Spoke
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1
-          kind: Namespace
+          apiVersion: work.open-cluster-management.io/v1
+          kind: ManifestWork
           metadata:
-            name: "{{ namespace_name }}"
-            labels:
-              managed-by: "acm-aap-integration"
-              application: "{{ app_label }}"
-        # Changed from kubeconfig_context to context
-        context: "{{ target_cluster }}"
-      register: ns_output
-
-    - name: Debug result
-      ansible.builtin.debug:
-        msg: "Namespace {{ namespace_name }} created/verified on {{ target_cluster }}"
+            name: "create-{{ namespace_name }}-ns"
+            # In ACM, ManifestWorks must be in the namespace named after the cluster
+            namespace: "{{ target_cluster }}"
+          spec:
+            workload:
+              manifests:
+                - apiVersion: v1
+                  kind: Namespace
+                  metadata:
+                    name: "{{ namespace_name }}"
+                    labels:
+                      managed-by: "acm-aap-integration"
