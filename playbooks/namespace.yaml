@@ -6,7 +6,7 @@
     - ../vault/vault.yaml  # Contains hub_url and token_acm
   vars:
     # These would typically be passed as Extra Vars from an AAP Job Template
-    target_cluster: "cluster1"
+    target_cluster: "local-cluster"
     namespace_name: "prod-apps"
     app_label: "billing-service"
 
