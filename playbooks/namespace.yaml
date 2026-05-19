@@ -1,17 +1,9 @@
 ---
-- name: Create Namespace on ACM Managed Cluster
+- name: Create Namespace across Multiple ACM Managed Clusters
   hosts: localhost
   gather_facts: false
   vars_files:
     - ../vault/vault.yaml  # Contains hub_url and token_acm
-  vars:
-    target_cluster: "local-cluster"
-    namespace_name: "prod-apps"
-
----
-- name: Create Namespace across Multiple ACM Managed Clusters
-  hosts: localhost
-  gather_facts: false
   vars:
     # Define the list of target clusters
     target_clusters:
