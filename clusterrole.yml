@@ -23,6 +23,7 @@ rules:
       - authentication.open-cluster-management.io
       - work.open-cluster-management.io
       - addon.open-cluster-management.io
+      - cluster.open-cluster-management.io
     resources:
       - managedserviceaccounts
       - manifestworks
@@ -30,6 +31,7 @@ rules:
       - managedserviceaccounts/finalizers
       - manifestworks/finalizers
       - managedclusteraddons/finalizers
+      - managedclusters
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
