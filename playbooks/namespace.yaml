@@ -8,27 +8,34 @@
     target_cluster: "local-cluster"
     namespace_name: "prod-apps"
 
+---
+- name: Create Namespace across Multiple ACM Managed Clusters
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Define the list of target clusters
+    target_clusters:
+      - local-cluster
+      - cluster1
+    
+    namespace_name: "prod-apps"
+
   tasks:
-    - name: Verify API connectivity
-      ansible.builtin.command:
-        cmd: printenv | grep K8S_AUTH
-      register: env_check
-      ignore_errors: true
-
-    - name: Show injected variables
-      ansible.builtin.debug:
-        var: env_check.stdout_lines
-
-    - name: Create ManifestWork on Hub to deploy Namespace to Spoke
+    - name: Create ManifestWorks for each cluster
       kubernetes.core.k8s:
+        # Utilizing the fallbacks that worked for your environment
+        host: "{{ lookup('ansible.builtin.env', 'K8S_AUTH_HOST') | default(k8s_host, true) }}"
+        api_key: "{{ lookup('ansible.builtin.env', 'K8S_AUTH_API_KEY') | default(k8s_auth_api_key, true) }}"
+        verify_ssl: false 
         state: present
         definition:
           apiVersion: work.open-cluster-management.io/v1
           kind: ManifestWork
           metadata:
-            name: "create-{{ namespace_name }}-ns"
-            # In ACM, ManifestWorks must be in the namespace named after the cluster
-            namespace: "{{ target_cluster }}"
+            # We append the cluster name to the ManifestWork name to keep them unique on the Hub
+            name: "create-{{ namespace_name }}-ns-{{ item }}"
+            # The namespace on the Hub cluster named after the managed cluster
+            namespace: "{{ item }}"
           spec:
             workload:
               manifests:
@@ -38,3 +45,13 @@
                     name: "{{ namespace_name }}"
                     labels:
                       managed-by: "acm-aap-integration"
+                      deployed-via: "ansible-loop"
+      # This loop iterates over the target_clusters list
+      loop: "{{ target_clusters }}"
+      register: manifest_results
+
+    - name: Summary of operations
+      ansible.builtin.debug:
+        msg: "ManifestWork created for cluster: {{ item.item }}"
+      loop: "{{ manifest_results.results }}"
+      when: item.changed
