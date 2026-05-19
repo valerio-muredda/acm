@@ -1,0 +1,29 @@
+---
+- name: Create Namespace on ACM Managed Cluster
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # These would typically be passed as Extra Vars from an AAP Job Template
+    target_cluster: "cluster1"
+    namespace_name: "prod-apps"
+    app_label: "billing-service"
+
+  tasks:
+    - name: Ensure namespace exists on the managed cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ namespace_name }}"
+            labels:
+              managed-by: "acm-aap-integration"
+              application: "{{ app_label }}"
+        # This parameter tells the Hub to execute the command on the spoke
+        kubeconfig_context: "{{ target_cluster }}"
+      register: ns_output
+
+    - name: Debug result
+      ansible.builtin.debug:
+        msg: "Namespace {{ namespace_name }} created/verified on {{ target_cluster }}"
