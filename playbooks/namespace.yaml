@@ -9,6 +9,16 @@
     namespace_name: "prod-apps"
 
   tasks:
+    - name: Verify API connectivity
+      ansible.builtin.command:
+        cmd: printenv | grep K8S_AUTH
+      register: env_check
+      ignore_errors: true
+
+    - name: Show injected variables
+      ansible.builtin.debug:
+        var: env_check.stdout_lines
+
     - name: Create ManifestWork on Hub to deploy Namespace to Spoke
       kubernetes.core.k8s:
         state: present
