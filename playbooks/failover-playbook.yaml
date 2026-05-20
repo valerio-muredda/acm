@@ -1,0 +1,37 @@
+---
+- name: Failover Bookinfo Reviews
+  hosts: localhost
+  #connection: local
+  gather_facts: false
+  vars_files:
+    - ../vault/vault.yaml  # Contains hub_url and token_acm
+  vars:
+    target_clusters:
+      - local-cluster
+    source_ns: "bookinfo"
+    target_ns: "bookinfo-failover"
+  tasks:
+    - name: Get Deployment from primary
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        name: reviews-v1
+        namespace: "{{ source_ns }}"
+      register: reviews_deploy
+
+    - name: Deploy to Failover Namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: reviews-v1
+            namespace: "{{ target_ns }}"
+          spec: "{{ reviews_deploy.resources[0].spec }}"
+
+    - name: Remove original deployment to stop alerts
+      kubernetes.core.k8s:
+        state: absent
+        kind: Deployment
+        name: reviews-v1
+        namespace: "{{ source_ns }}"
