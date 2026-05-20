@@ -7,7 +7,7 @@
     - ../vault/vault.yaml  # Contains hub_url and token_acm
   vars:
     target_clusters:
-      - local-cluster
+      - cluster2
     source_ns: "bookinfo"
     target_ns: "bookinfo-failover"
   tasks:
