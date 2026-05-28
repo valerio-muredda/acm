@@ -4,7 +4,7 @@
   sources:
     - ansible.eda.alertmanager:
         host: 0.0.0.0
-        port: 5000
+        port: 8002 #5000
   rules:
     - name: Trigger Migration on Reviews Failure
       condition:
