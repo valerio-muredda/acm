@@ -8,7 +8,7 @@
     # Define the list of target clusters
     target_clusters:
       - local-cluster
-      - cluster2
+      - cluster1
     
     namespace_name: "prod-apps"
 
