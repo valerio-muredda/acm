@@ -5,7 +5,7 @@
   tasks:
     - name: Log the incoming alert
       ansible.builtin.debug:
-        msg: "Received alert '{{ alert_summary }}' from cluster '{{ alert_cluster }}'"
+        msg: "Received alert '{{ alert_summary }}' from cluster '{{ target_cluster }}'"
 
     - name: Remediate Missing ConfigMap
       kubernetes.core.k8s:
@@ -19,8 +19,8 @@
             namespace: default
           data:
             status: "remediated-by-ansible"
-      when: alert_cluster == "cluster1"
+      when: target_cluster == "cluster1"
 
     - name: Notification of success
       ansible.builtin.debug:
-        msg: "Remediation complete for {{ alert_cluster }}."
+        msg: "Remediation complete for {{ target_cluster }}."
