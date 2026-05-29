@@ -7,7 +7,7 @@
       ansible.builtin.debug:
         msg: "Received alert '{{ alert_message }}' from cluster '{{ alert_cluster }}'"
 
-    - name: Remediate - Create the missing ConfigMap on Cluster1
+    - name: Remediate Missing ConfigMap
       kubernetes.core.k8s:
         host: https://api.cluster1.sandbox690.opentlc.com:6443
         validate_certs: false
