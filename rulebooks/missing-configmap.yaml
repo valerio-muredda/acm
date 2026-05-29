@@ -12,14 +12,16 @@
         debug:
           msg: "RAW EVENT RECEIVED: {{ event }}"
 
-    # --- YOUR ACTUAL RULE ---
+
     - name: Trigger Remediation for Dummy Alert on Cluster1
-      condition: event.alert.labels.alertname == "DummyAlertTriggered" and event.alert.status == "firing"
+      # Evaluates the top-level status and the grouped commonLabels
+      condition: event.payload.commonLabels.alertname == "DummyAlertTriggered" and event.payload.status == "firing"
       action:
         run_job_template:
           name: "Remediate Missing ConfigMap"
           organization: "Default"
           job_args:
             extra_vars:
-              target_cluster: "{{ event.alert.labels.cluster }}"
-              alert_summary: "{{ event.alert.annotations.summary }}"
+              # Passing the correct payload paths to the playbook
+              target_cluster: "{{ event.payload.commonLabels.cluster }}"
+              alert_summary: "{{ event.payload.commonAnnotations.summary }}"
