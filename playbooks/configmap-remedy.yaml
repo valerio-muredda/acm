@@ -5,7 +5,7 @@
   tasks:
     - name: Log the incoming alert
       ansible.builtin.debug:
-        msg: "Received alert '{{ alert_message }}' from cluster '{{ alert_cluster }}'"
+        msg: "Received alert '{{ alert_summary }}' from cluster '{{ alert_cluster }}'"
 
     - name: Remediate Missing ConfigMap
       kubernetes.core.k8s:
