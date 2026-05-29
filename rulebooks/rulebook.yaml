@@ -2,9 +2,12 @@
 - name: Listen for Bookinfo Failures
   hosts: all
   sources:
-    - ansible.eda.alertmanager:
-        host: 0.0.0.0
-        port: 8002 #5000
+#  - ansible.eda.eda_controller:
+#      host: "{{ eda_host }}"
+#      token: "{{ eda_token }}"
+  - ansible.eda.alertmanager:
+      host: 0.0.0.0
+      port: 8002 #5000
   rules:
     - name: Trigger Migration on Reviews Failure
       condition:
