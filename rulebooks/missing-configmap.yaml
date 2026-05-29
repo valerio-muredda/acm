@@ -2,10 +2,17 @@
 - name: Listen for ACM Multicluster Alerts
   hosts: all
   sources:
-    # The event stream infrastructure handles the actual ingress and network routing
     - ansible.eda.alertmanager: {}
 
   rules:
+    # --- DEBUG RULE: Catches everything to show you the exact JSON structure ---
+    - name: Catch All and Debug Payload
+      condition: true
+      action:
+        debug:
+          msg: "RAW EVENT RECEIVED: {{ event }}"
+
+    # --- YOUR ACTUAL RULE ---
     - name: Trigger Remediation for Dummy Alert on Cluster1
       condition: event.alert.labels.alertname == "DummyAlertTriggered" and event.alert.status == "firing"
       action:
