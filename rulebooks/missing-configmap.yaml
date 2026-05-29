@@ -15,7 +15,11 @@
 
     - name: Trigger Remediation for Dummy Alert on Cluster1
       # Evaluates the top-level status and the grouped commonLabels
-      condition: event.payload.commonLabels.alertname == "DummyAlertTriggered" and event.payload.status == "firing"
+      #condition: event.payload.commonLabels.alertname == "DummyAlertTriggered" and event.payload.status == "firing"
+      condition:
+        all:
+          - event.payload.status == "firing"
+          - event.payload.commonLabels.alertname == "DummyAlertTriggered"
       action:
         run_job_template:
           name: "Remediate Missing ConfigMap"
