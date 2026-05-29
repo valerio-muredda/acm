@@ -1,0 +1,26 @@
+---
+- name: Fix Cluster1 Issues
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Log the incoming alert
+      ansible.builtin.debug:
+        msg: "Received alert '{{ alert_message }}' from cluster '{{ alert_cluster }}'"
+
+    - name: Remediate - Create the missing ConfigMap on Cluster1
+      kubernetes.core.k8s:
+        host: https://api.cluster1.sandbox690.opentlc.com:6443
+        validate_certs: false
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: eda-trigger-map
+            namespace: default
+          data:
+            status: "remediated-by-ansible"
+      when: alert_cluster == "cluster1"
+
+    - name: Notification of success
+      ansible.builtin.debug:
+        msg: "Remediation complete for {{ alert_cluster }}."
