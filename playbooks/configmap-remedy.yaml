@@ -5,12 +5,13 @@
   tasks:
     - name: Log the incoming alert
       ansible.builtin.debug:
-        msg: "Received alert '{{ alert_summary }}' from cluster '{{ target_cluster }}'"
+        msg: "Received FIRING alert '{{ alert_summary }}' from cluster '{{ target_cluster }}'"
 
     - name: Remediate Missing ConfigMap
       kubernetes.core.k8s:
-        host: https://api.cluster1.sandbox690.opentlc.com:6443
-        validate_certs: false
+        #host: https://api.cluster1.sandbox690.opentlc.com:6443
+        #validate_certs: false
+        state: present
         definition:
           apiVersion: v1
           kind: ConfigMap
@@ -19,6 +20,7 @@
             namespace: default
           data:
             status: "remediated-by-ansible"
+            timestamp: "{{ ansible_date_time.iso8601 }}"
       when: target_cluster == "cluster1"
 
     - name: Notification of success
