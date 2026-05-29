@@ -6,26 +6,12 @@
 
   rules:
     - name: Trigger Remediation for Dummy Alert on Cluster1
-      # Evaluates the top-level status and the grouped commonLabels
-      #condition: event.payload.commonLabels.alertname == "DummyAlertTriggered" and event.payload.status == "firing"
-      condition:
-        all:
-          - event.payload.status == "firing"
-          - event.payload.commonLabels.alertname == "DummyAlertTriggered"
+      condition: event.payload.alerts[0].labels.alertname == "DummyAlertTriggered" and event.payload.status == "firing"
       action:
         run_job_template:
           name: "Remediate Missing ConfigMap"
           organization: "Default"
           job_args:
             extra_vars:
-              # Passing the correct payload paths to the playbook
-              target_cluster: "{{ event.payload.commonLabels.cluster }}"
-              alert_summary: "{{ event.payload.commonAnnotations.summary }}"
-
-
-    # --- DEBUG RULE: Catches everything to show you the exact JSON structure ---
-    - name: Catch All and Debug Payload
-      condition: true
-      action:
-        debug:
-          msg: "RAW EVENT RECEIVED: {{ event }}"
+              target_cluster: "{{ event.payload.alerts[0].labels.cluster }}"
+              alert_summary: "{{ event.payload.alerts[0].annotations.summary }}"
